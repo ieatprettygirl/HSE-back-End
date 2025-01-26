@@ -38,7 +38,6 @@ public class UserService {
         this.jwtUtil = jwtUtil;
     }
 
-    private final SecretKey SECRET_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS256);
 
     public String registerUser(String login, String password,int age,  String fullName, Role role) {
         String hashedPassword = passwordEncoder.encode(password);

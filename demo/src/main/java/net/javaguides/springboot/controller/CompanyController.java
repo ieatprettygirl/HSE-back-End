@@ -34,7 +34,6 @@ public class CompanyController {
     }
 
     // get all
-    @PreAuthorize("hasAuthority('USER')")
     @GetMapping("/companies")
     public List<Company> getAllCompanies(){
         return companyRepository.findAll();
@@ -47,6 +46,7 @@ public class CompanyController {
     }
 
     // get
+    @PreAuthorize("hasRole('ROLE_1')")
     @GetMapping("/companies/{id}")
     public ResponseEntity<Company> getCompanyById(@PathVariable Long id) {
         Company company = companyRepository.findById(id)
