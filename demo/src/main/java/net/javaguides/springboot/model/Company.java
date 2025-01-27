@@ -2,8 +2,13 @@ package net.javaguides.springboot.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.Date;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "companies")
 public class Company {
@@ -32,10 +37,14 @@ public class Company {
 
     private Boolean status = false;
 
+    @ManyToOne
+    @JoinColumn(name = "role_id", nullable = false)
+    private Role role;
+
     public Company() {
     }
 
-    public Company(String inn, String kpp, String ogrn, String address, String director, Date dateRegister, Boolean status) {
+    public Company(String inn, String kpp, String ogrn, String address, String director, Date dateRegister, Boolean status, Role role) {
         super();
         this.inn = inn;
         this.kpp = kpp;
@@ -44,66 +53,6 @@ public class Company {
         this.director = director;
         this.dateRegister = dateRegister;
         this.status = status;
-    }
-
-
-    public long getId() {
-        return id;
-    }
-    public void setId(long id) {
-        this.id = id;
-    }
-    public Date getDateRegister() {
-        return dateRegister;
-    }
-
-    public String getDirector() {
-        return director;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public String getOgrn() {
-        return ogrn;
-    }
-
-    public String getKpp() {
-        return kpp;
-    }
-
-    public String getInn() {
-        return inn;
-    }
-    public Boolean getStatus() {
-        return status;
-    }
-
-    public void setStatus(Boolean status) {
-        this.status = status;
-    }
-    public void setInn(String inn) {
-        this.inn = inn;
-    }
-
-    public void setKpp(String kpp) {
-        this.kpp = kpp;
-    }
-
-    public void setOgrn(String ogrn) {
-        this.ogrn = ogrn;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
-    public void setDirector(String director) {
-        this.director = director;
-    }
-
-    public void setDateRegister(Date dateRegister) {
-        this.dateRegister = dateRegister;
+        this.role = role;
     }
 }

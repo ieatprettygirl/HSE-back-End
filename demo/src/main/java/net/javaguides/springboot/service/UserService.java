@@ -40,6 +40,11 @@ public class UserService {
 
 
     public String registerUser(String login, String password,int age,  String fullName, Role role) {
+
+        if (userRepository.existsByLogin(login)) {
+            throw new RuntimeException("A user with this login already exists!");
+        }
+
         String hashedPassword = passwordEncoder.encode(password);
 
         User user = new User(login, hashedPassword, fullName, role, age);
@@ -52,6 +57,17 @@ public class UserService {
         }
 
         userRepository.save(user);
+
+        return jwtUtil.generateToken(user.getLogin(), user.getRole().getId());
+    }
+
+    public String authenticateUser(String login, String password) {
+        User user = userRepository.findByLogin(login)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new RuntimeException("Invalid credentials");
+        }
 
         return jwtUtil.generateToken(user.getLogin(), user.getRole().getId());
     }

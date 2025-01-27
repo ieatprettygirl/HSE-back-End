@@ -41,6 +41,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable()) // Отключение CSRF
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/register").permitAll() // Запросы без токена
+                        .requestMatchers("/api/auth/login").permitAll()
                         .anyRequest().authenticated() // Запросы с аутентификацией
                 )
                 .exceptionHandling(httpExceptionHandling ->

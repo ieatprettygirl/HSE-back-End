@@ -3,9 +3,12 @@ package net.javaguides.springboot.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
+import lombok.*;
 
 import java.util.Date;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "users")
 public class User {
@@ -40,61 +43,5 @@ public class User {
         this.age = age;
         this.fullName = fullName;
         this.role = role;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public void setLogin(String login) {
-        this.login = login;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
-    }
-
-    public void setAge(int age) {
-        this.age = age;
-    }
-
-    public void setEducation(String education) {
-        this.education = education;
-    }
-
-    public void setRole(Role role) {
-        this.role = role;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getLogin() {
-        return login;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public String getFullName() {
-        return fullName;
-    }
-
-    public int getAge() {
-        return age;
-    }
-
-    public String getEducation() {
-        return education;
-    }
-
-    public Role getRole() {
-        return role;
     }
 }

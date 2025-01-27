@@ -6,6 +6,7 @@ import net.javaguides.springboot.model.ReviewCompany;
 import net.javaguides.springboot.model.User;
 import net.javaguides.springboot.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -35,5 +36,25 @@ public class UserController {
         response.put("created", Boolean.TRUE);
         response.put("token", token);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> loginRequest) {
+        String login = loginRequest.get("login");
+        String password = loginRequest.get("password");
+        try {
+            String token = userService.authenticateUser(login, password);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("authenticated", Boolean.TRUE);
+            response.put("token", token);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("authenticated", Boolean.FALSE);
+            errorResponse.put("error", e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+        }
     }
 }
