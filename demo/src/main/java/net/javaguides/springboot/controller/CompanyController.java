@@ -1,20 +1,16 @@
 package net.javaguides.springboot.controller;
 import java.util.*;
 
+import jakarta.validation.Valid;
+import net.javaguides.springboot.model.Role;
+import net.javaguides.springboot.repository.RoleRepository;
+import net.javaguides.springboot.service.RoleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import net.javaguides.springboot.exception.ResourceNotFoundException;
 import net.javaguides.springboot.model.Company;
@@ -25,6 +21,9 @@ import net.javaguides.springboot.repository.CompanyRepository;
 // base URL
 @RequestMapping("/api/v1/")
 public class CompanyController {
+
+    @Autowired
+    private RoleService roleService;
 
     private final CompanyRepository companyRepository;
 
@@ -40,13 +39,19 @@ public class CompanyController {
     }
 
     // create
+    @PreAuthorize("hasRole('ROLE_1')")
     @PostMapping("/companies")
-    public Company createCompany(@RequestBody Company company) {
+    public Company createCompany(@RequestBody @Valid Company company) {
+
+        Role role = roleService.getRoleById(3L);
+        company.setRole(role);
+        if (companyRepository.existsByLogin(company.getLogin())) {
+            throw new RuntimeException("A company user with this login already exists!");
+        }
         return companyRepository.save(company);
     }
 
     // get
-    @PreAuthorize("hasRole('ROLE_1')")
     @GetMapping("/companies/{id}")
     public ResponseEntity<Company> getCompanyById(@PathVariable Long id) {
         Company company = companyRepository.findById(id)
@@ -55,7 +60,6 @@ public class CompanyController {
     }
 
     // update
-    @PreAuthorize("hasAuthority('ADMIN')")
     @PutMapping("/companies/{id}")
     public ResponseEntity<Company> updateCompany(@PathVariable Long id, @RequestBody Company companyDetails){
         Company company = companyRepository.findById(id)

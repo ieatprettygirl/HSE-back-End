@@ -63,7 +63,7 @@ public class UserService {
 
     public String authenticateUser(String login, String password) {
         User user = userRepository.findByLogin(login)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+               .orElseThrow(() -> new RuntimeException("User not found"));
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new RuntimeException("Invalid credentials");
@@ -71,20 +71,4 @@ public class UserService {
 
         return jwtUtil.generateToken(user.getLogin(), user.getRole().getId());
     }
-
-    /* Метод для генерации токена (пример)
-    private String generateToken(String login, Long roleId) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("login", login); // Добавляем логин
-        claims.put("role_id", roleId); // Добавляем ID роли
-
-        return Jwts.builder()
-                .setClaims(claims) // Устанавливаем данные в токен
-                .setSubject(login) // Устанавливаем subject
-                .setIssuedAt(new Date(System.currentTimeMillis())) // Устанавливаем дату выдачи
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24 * 7)) // время жизни токена (неделя)
-                .signWith(SECRET_KEY) // Подписываем токен
-                .compact(); // Создаем токен
-    }
-     */
 }

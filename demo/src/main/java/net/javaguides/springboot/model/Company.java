@@ -18,6 +18,14 @@ public class Company {
     private Long id;
 
     @NotNull
+    @Column(nullable = false, unique = true)
+    private String login;
+
+    @NotNull
+    @Column(nullable = false)
+    private String password;
+
+    @NotNull
     private String inn;
 
     @NotNull

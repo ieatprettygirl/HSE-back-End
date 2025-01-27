@@ -32,16 +32,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private String jwtSecret;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
+    public void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
         String authHeader = request.getHeader("Authorization");
 
+        // Обработка запросов без токена
+        String requestURI = request.getRequestURI();
+        if (requestURI.equals("/api/auth/register") || requestURI.equals("/api/auth/login")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String jwtToken = authHeader.substring(7);
-
             try {
                 // Создаем секретный ключ из конфигурации
                 SecretKey secretKey = new SecretKeySpec(jwtSecret.getBytes(), SignatureAlgorithm.HS256.getJcaName());
@@ -72,14 +78,26 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authenticationToken);
 
             } catch (JwtException e) {
-                // Отправляем статус 401 и описание ошибки
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.getWriter().write("Invalid JWT token: " + e.getMessage());
+                sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED);
                 return; // Прерываем дальнейшее выполнение
             }
         }
-
+        else {
+            sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED);
+        }
         // Продолжаем обработку запроса, если токен валиден
         filterChain.doFilter(request, response);
+    }
+    private void sendErrorResponse(HttpServletResponse response, int status) throws IOException {
+        response.setStatus(status);
+        response.setContentType("application/json");
+
+        // Формируем JSON-ответ
+        String jsonResponse = "{\"success\": false,\n" +
+                "  \"token\": null\n" +
+                "}";
+
+        // Отправляем JSON-ответ
+        response.getWriter().write(jsonResponse);
     }
 }

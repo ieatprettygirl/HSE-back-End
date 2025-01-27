@@ -24,11 +24,21 @@ public class User {
     @Column(nullable = false)
     private String password;
 
+    @NotNull
     @JsonProperty("full_name")
     @Column(name = "full_name")
     private String fullName;
+
+    @NotNull
     private int age;
+
     private String education;
+
+    @JsonProperty("middle_grade")
+    @Column(name = "middle_grade")
+    @DecimalMin(value = "0.0", inclusive = true)
+    @DecimalMax(value = "5.0", inclusive = true)
+    private double middlegrade;
 
     @ManyToOne
     @JoinColumn(name = "role_id", nullable = false)
