@@ -32,7 +32,8 @@ public class CompanyController {
         this.companyRepository = companyRepository;
     }
 
-    // get all
+    // get all info
+    @PreAuthorize("hasRole('ROLE_1')")
     @GetMapping("/companies")
     public List<Company> getAllCompanies(){
         return companyRepository.findAll();
@@ -42,12 +43,6 @@ public class CompanyController {
     @PreAuthorize("hasRole('ROLE_1')")
     @PostMapping("/companies")
     public Company createCompany(@RequestBody @Valid Company company) {
-
-        Role role = roleService.getRoleById(3L);
-        company.setRole(role);
-        if (companyRepository.existsByLogin(company.getLogin())) {
-            throw new RuntimeException("A company user with this login already exists!");
-        }
         return companyRepository.save(company);
     }
 
@@ -60,6 +55,7 @@ public class CompanyController {
     }
 
     // update
+    @PreAuthorize("hasRole('ROLE_1')")
     @PutMapping("/companies/{id}")
     public ResponseEntity<Company> updateCompany(@PathVariable Long id, @RequestBody Company companyDetails){
         Company company = companyRepository.findById(id)
@@ -70,20 +66,21 @@ public class CompanyController {
         company.setOgrn(companyDetails.getOgrn());
         company.setAddress(companyDetails.getAddress());
         company.setDirector(companyDetails.getDirector());
-        company.setDateRegister(companyDetails.getDateRegister());
-        company.setStatus(companyDetails.getStatus());
+        company.setDate_reg(companyDetails.getDate_reg());
+        company.setIs_accepted(companyDetails.getIs_accepted());
 
         Company updatedCompany = companyRepository.save(company);
         return ResponseEntity.ok(updatedCompany);
     }
 
-    // delete employee rest api
+    // delete comp rest api
+    @PreAuthorize("hasRole('ROLE_1')")
     @DeleteMapping("/companies/{id}")
     public ResponseEntity<Map<String, Boolean>> deleteCompany(@PathVariable Long id){
-        Company employee = companyRepository.findById(id)
+        Company company = companyRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Company not exist with id :" + id));
 
-        companyRepository.delete(employee);
+        companyRepository.delete(company);
         Map<String, Boolean> response = new HashMap<>();
         response.put("deleted", Boolean.TRUE);
         return ResponseEntity.ok(response);

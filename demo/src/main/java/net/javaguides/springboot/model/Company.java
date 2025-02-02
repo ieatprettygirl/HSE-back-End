@@ -10,20 +10,12 @@ import java.util.Date;
 @Getter
 @Setter
 @Entity
-@Table(name = "companies")
+@Table(name = "company")
 public class Company {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @NotNull
-    @Column(nullable = false, unique = true)
-    private String login;
-
-    @NotNull
-    @Column(nullable = false)
-    private String password;
+    private Long company_id;
 
     @NotNull
     private String inn;
@@ -41,26 +33,21 @@ public class Company {
     private String director;
 
     @NotNull
-    private Date dateRegister;
+    private Date date_reg;
 
-    private Boolean status = false;
-
-    @ManyToOne
-    @JoinColumn(name = "role_id", nullable = false)
-    private Role role;
+    private Boolean is_accepted = false;
 
     public Company() {
     }
 
-    public Company(String inn, String kpp, String ogrn, String address, String director, Date dateRegister, Boolean status, Role role) {
+    public Company(String inn, String kpp, String ogrn, String address, String director, Date dateRegister, Boolean is_accepted) {
         super();
         this.inn = inn;
         this.kpp = kpp;
         this.ogrn = ogrn;
         this.address = address;
         this.director = director;
-        this.dateRegister = dateRegister;
-        this.status = status;
-        this.role = role;
+        this.date_reg = dateRegister;
+        this.is_accepted = is_accepted;
     }
 }

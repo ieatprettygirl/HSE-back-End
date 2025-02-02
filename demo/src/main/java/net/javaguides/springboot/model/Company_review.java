@@ -8,16 +8,20 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "reviewsCompany")
-public class ReviewCompany {
+@Table(name = "company_review")
+public class Company_review {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long company_review_id;
 
     @ManyToOne
-    @JoinColumn(name = "company_id", nullable = false)
-    private Company company;
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    @ManyToOne
+    @JoinColumn(name = "employee_id", nullable = false)
+    private Employee employee;
 
     @Size(max = 1000)
     private String feedback;
@@ -27,12 +31,13 @@ public class ReviewCompany {
     @NotNull
     private int grade;
 
-    public ReviewCompany() {
+    public Company_review() {
     }
 
-    public ReviewCompany(String feedback, int grade, Company company) {
+    public Company_review(String feedback, int grade, User user, Employee employee) {
         this.feedback = feedback;
         this.grade = grade;
-        this.company = company;
+        this.user = user;
+        this.employee = employee;
     }
 }

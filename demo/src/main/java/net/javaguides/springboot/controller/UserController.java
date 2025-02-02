@@ -42,7 +42,7 @@ public class UserController {
 
     @PostMapping("/auth/register")
     public ResponseEntity<Map<String, Object>> createUser(@Valid @RequestBody User user) {
-        String token = userService.registerUser(user.getLogin(), user.getPassword(), user.getAge(), user.getFullName(), user.getRole());
+        String token = userService.registerUser(user.getLogin(), user.getPassword(), user.getRole());
 
         Map<String, Object> response = new HashMap<>();
         response.put("created", Boolean.TRUE);
@@ -70,6 +70,7 @@ public class UserController {
         }
     }
 
+    /*
     // get all users
     @PreAuthorize("hasRole('ROLE_1')")
     @GetMapping("/users")
@@ -86,7 +87,7 @@ public class UserController {
         UserGetOneDTO UserGetOneDTO = new UserGetOneDTO(user.getFullName(), user.getAge(), user.getEducation(), user.getMiddlegrade());
 
         return ResponseEntity.ok(UserGetOneDTO);
-    }
+    }    */
 
     // change in your profile (not @Valid else drop)
     @PutMapping("/profile/{id}")
@@ -107,14 +108,15 @@ public class UserController {
         }
 
         if (user.getPassword() != null) { existingUser.setPassword(bCryptPasswordEncoder.encode(user.getPassword())); }
+        /*
         if (user.getFullName() != null) { existingUser.setFullName(user.getFullName()); }
         if (user.getAge() > 0) { existingUser.setAge(user.getAge()); }
         if (user.getEducation() != null) { existingUser.setEducation(user.getEducation()); }
         if (user.getMiddlegrade() > 0.0) { existingUser.setMiddlegrade(user.getMiddlegrade()); }
-
+        */
         userRepository.save(existingUser);
 
-        String newToken = jwtUtil.generateToken(existingUser.getLogin(), existingUser.getRole().getId());
+        String newToken = jwtUtil.generateToken(existingUser.getLogin(), existingUser.getRole().getRole_id());
 
         Map<String, Object> response = new HashMap<>();
         response.put("user", existingUser);
@@ -123,7 +125,7 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
-    // delete employee rest api
+    // delete user rest api
     @DeleteMapping("/users/{id}")
     @PreAuthorize("hasRole('ROLE_1')")
     public ResponseEntity<Map<String, Object>> deleteUser(@PathVariable Long id){

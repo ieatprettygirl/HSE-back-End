@@ -1,17 +1,19 @@
 package net.javaguides.springboot.model;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.*;
-import lombok.*;
+import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 @Setter
 @Entity
-@Table(name = "\"user\"")
-public class User {
+@Table(name = "employee")
+public class Employee {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long user_id;
+    private Long employee_id;
 
     @NotNull
     @Column(nullable = false, unique = true)
@@ -25,12 +27,17 @@ public class User {
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;
 
-    public User() {
+    @ManyToOne
+    @JoinColumn(name = "company_id", nullable = false)
+    private Company company;
+
+    public Employee() {
     }
 
-    public User(String login, String password, Role role) {
+    public Employee(String login, String password, Role role, Company company) {
         this.login = login;
         this.password = password;
         this.role = role;
+        this.company = company;
     }
 }
