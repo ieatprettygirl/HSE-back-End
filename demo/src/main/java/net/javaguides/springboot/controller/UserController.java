@@ -18,7 +18,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @CrossOrigin(origins = "http://localhost:5432")
@@ -40,6 +39,7 @@ public class UserController {
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
     }
 
+    // register
     @PostMapping("/auth/register")
     public ResponseEntity<Map<String, Object>> createUser(@Valid @RequestBody User user) {
         String token = userService.registerUser(user.getLogin(), user.getPassword(), user.getRole());
@@ -50,6 +50,7 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
+    // login and authenticate
     @PostMapping("/auth/login")
     public ResponseEntity<Map<String, Object>> login(@RequestBody @Valid Map<String, String> loginRequest) {
         String login = loginRequest.get("login");
@@ -70,24 +71,25 @@ public class UserController {
         }
     }
 
-    /*
     // get all users
-    @PreAuthorize("hasRole('ROLE_1')")
-    @GetMapping("/users")
-    public List<User> getAllUsers(){
-        return userRepository.findAll();
+    // @PreAuthorize("hasRole('ROLE_1')")
+    // @GetMapping("/users")
+    // public List<User> getAllUsers(){
+    //     return userRepository.findAll();
+    // }
+
+    // get information about my user
+    @GetMapping("/profile/{id}")
+    public ResponseEntity<User> getUserById(@PathVariable Long id) {
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        User existingUser = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found!"));
+
+        if (!existingUser.getLogin().equals(currentUsername)) {
+            throw new RuntimeException("You can only update your own profile!");
+        }
+        return ResponseEntity.ok(existingUser);
     }
-
-    // get one (custom) information about user
-    @GetMapping("/users/{id}")
-    public ResponseEntity<UserGetOneDTO> getUserById(@PathVariable Long id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User not exist with id: " + id));
-
-        UserGetOneDTO UserGetOneDTO = new UserGetOneDTO(user.getFullName(), user.getAge(), user.getEducation(), user.getMiddlegrade());
-
-        return ResponseEntity.ok(UserGetOneDTO);
-    }    */
 
     // change in your profile (not @Valid else drop)
     @PutMapping("/profile/{id}")
@@ -108,12 +110,6 @@ public class UserController {
         }
 
         if (user.getPassword() != null) { existingUser.setPassword(bCryptPasswordEncoder.encode(user.getPassword())); }
-        /*
-        if (user.getFullName() != null) { existingUser.setFullName(user.getFullName()); }
-        if (user.getAge() > 0) { existingUser.setAge(user.getAge()); }
-        if (user.getEducation() != null) { existingUser.setEducation(user.getEducation()); }
-        if (user.getMiddlegrade() > 0.0) { existingUser.setMiddlegrade(user.getMiddlegrade()); }
-        */
         userRepository.save(existingUser);
 
         String newToken = jwtUtil.generateToken(existingUser.getLogin(), existingUser.getRole().getRole_id());
@@ -146,6 +142,26 @@ public class UserController {
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
         response.put("message", "User deleted successfully!");
+        return ResponseEntity.ok(response);
+    }
+
+    // delete profile
+    @DeleteMapping("/profile/{id}")
+    public ResponseEntity<Map<String, Object>> deleteMyProfile(@PathVariable Long id) {
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        User existingUser = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found!"));
+
+        if (!existingUser.getLogin().equals(currentUsername)) {
+            throw new RuntimeException("You can only delete your own profile!");
+        }
+        userRepository.delete(existingUser);
+
+        SecurityContextHolder.clearContext();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", "You profile deleted successfully!");
         return ResponseEntity.ok(response);
     }
 }

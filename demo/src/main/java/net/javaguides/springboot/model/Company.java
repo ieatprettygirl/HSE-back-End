@@ -18,21 +18,27 @@ public class Company {
     private Long company_id;
 
     @NotNull
+    @Column(nullable = false)
     private String inn;
 
     @NotNull
+    @Column(nullable = false)
     private String kpp;
 
     @NotNull
+    @Column(nullable = false)
     private String ogrn;
 
     @NotNull
+    @Column(nullable = false, length = 1000)
     private String address;
 
     @NotNull
+    @Column(nullable = false)
     private String director;
 
     @NotNull
+    @Column(nullable = false)
     private Date date_reg;
 
     private Boolean is_accepted = false;

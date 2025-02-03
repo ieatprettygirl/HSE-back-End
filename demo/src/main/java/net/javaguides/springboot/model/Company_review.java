@@ -23,7 +23,7 @@ public class Company_review {
     @JoinColumn(name = "employee_id", nullable = false)
     private Employee employee;
 
-    @Size(max = 1000)
+    @Column(length = 1000)
     private String feedback;
 
     @Min(0)
