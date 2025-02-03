@@ -1,4 +1,5 @@
 package net.javaguides.springboot.model;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
@@ -13,8 +14,9 @@ public class Resume {
     private Long resume_id;
 
     @OneToOne
-    @MapsId // Используем user_id как resume_id
+    @MapsId
     @JoinColumn(name = "resume_id")
+    @JsonIgnoreProperties({"password", "role", "resume", "login"})
     private User user;
 
     @NotNull
@@ -41,4 +43,18 @@ public class Resume {
 
     @Column(length = 1000)
     private String description;
+
+    public Resume() {
+    }
+
+    public Resume(User user, String education, String skills, Date birthday, String gender, String full_name, String contact, String description) {
+        this.user = user;
+        this.education = education;
+        this.skills = skills;
+        this.birthday = birthday;
+        this.gender = gender;
+        this.full_name = full_name;
+        this.contact = contact;
+        this.description = description;
+    }
 }
