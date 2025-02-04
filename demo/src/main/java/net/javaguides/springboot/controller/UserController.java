@@ -122,7 +122,7 @@ public class UserController {
     }
 
     // delete user rest api
-    @DeleteMapping("/users/{id}")
+    @DeleteMapping("/user/{id}")
     @PreAuthorize("hasRole('ROLE_1')")
     public ResponseEntity<Map<String, Object>> deleteUser(@PathVariable Long id){
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();

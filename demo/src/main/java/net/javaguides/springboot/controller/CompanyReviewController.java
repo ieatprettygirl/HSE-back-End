@@ -1,4 +1,5 @@
 package net.javaguides.springboot.controller;
+
 import java.util.*;
 
 import jakarta.validation.Valid;
@@ -32,19 +33,19 @@ public class CompanyReviewController {
 
 
     @GetMapping("/company_reviews")
-    public List<Company_review> getAllReviewsCompany(){
+    public List<Company_review> getAllReviewsCompany() {
         return reviewCompanyRepository.findAll();
     }
 
 
-   @PostMapping("/company_reviews")
-   public ResponseEntity<Map<String, Boolean>> createReviewCompany(@Valid @RequestBody Company_review reviewCompany) {
-       reviewCompanyRepository.save(reviewCompany);
+    @PostMapping("/company_reviews")
+    public ResponseEntity<Map<String, Boolean>> createReviewCompany(@Valid @RequestBody Company_review reviewCompany) {
+        reviewCompanyRepository.save(reviewCompany);
 
-       Map<String, Boolean> response = new HashMap<>();
-       response.put("created", Boolean.TRUE);
-       return ResponseEntity.ok(response);
-   }
+        Map<String, Boolean> response = new HashMap<>();
+        response.put("created", Boolean.TRUE);
+        return ResponseEntity.ok(response);
+    }
 
     @GetMapping("/company_reviews/{id}")
     public ResponseEntity<Company_review> getReviewCompanyById(@PathVariable Long id) {
@@ -69,7 +70,7 @@ public class CompanyReviewController {
      */
 
     @DeleteMapping("/reviewsCompany/{id}")
-    public ResponseEntity<Map<String, Boolean>> deleteReviewCompany(@PathVariable Long id){
+    public ResponseEntity<Map<String, Boolean>> deleteReviewCompany(@PathVariable Long id) {
         Company_review reviewCompany = reviewCompanyRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Review company not exist with id :" + id));
 

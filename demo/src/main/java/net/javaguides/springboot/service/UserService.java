@@ -39,7 +39,7 @@ public class UserService {
     }
 
 
-    public String registerUser(String login, String password,Role role) {
+    public String registerUser(String login, String password, Role role) {
 
         if (userRepository.existsByLogin(login)) {
             throw new RuntimeException("A user with this login already exists!");
