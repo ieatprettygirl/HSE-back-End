@@ -42,6 +42,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/register").permitAll() // Запросы без токена
                         .requestMatchers("/api/auth/login").permitAll()
+                        .requestMatchers("/api/auth/confirm").permitAll()
                         .anyRequest().authenticated() // Запросы с аутентификацией
                 )
                 .exceptionHandling(httpExceptionHandling ->

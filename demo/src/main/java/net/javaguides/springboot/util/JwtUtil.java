@@ -1,6 +1,7 @@
 package net.javaguides.springboot.util;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.beans.factory.annotation.Value;
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import java.util.Base64;
 import java.util.Date;
 
 @Component
@@ -30,5 +32,17 @@ public class JwtUtil {
                 .signWith(secretKey) // Подписываем токен
                 .compact(); // Создаем токен
     }
-
+    public String extractUsername(String token) {
+        return extractClaims(token).getSubject(); // В subject хранится username
+    }
+    public Claims extractClaims(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())  // Передаем ключ
+                .build()
+                .parseClaimsJws(token) // Разбираем токен
+                .getBody(); // Достаем payload (данные)
+    }
+    private SecretKey getSigningKey() {
+        return new SecretKeySpec(jwtSecret.getBytes(), SignatureAlgorithm.HS256.getJcaName());
+    }
 }

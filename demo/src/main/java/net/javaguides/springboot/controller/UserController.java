@@ -7,6 +7,7 @@ import net.javaguides.springboot.exception.ResourceNotFoundException;
 import net.javaguides.springboot.model.Company;
 import net.javaguides.springboot.model.User;
 import net.javaguides.springboot.repository.UserRepository;
+import net.javaguides.springboot.service.EmailService;
 import net.javaguides.springboot.service.UserService;
 import net.javaguides.springboot.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,8 +18,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @CrossOrigin(origins = "http://localhost:5432")
 @RestController
@@ -26,17 +29,19 @@ import java.util.Map;
 @RequestMapping("/api/")
 public class UserController {
 
+    private final EmailService emailService;
     private final UserService userService;
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
     @Autowired
-    public UserController(UserService userService, UserRepository userRepository, JwtUtil jwtUtil, BCryptPasswordEncoder bCryptPasswordEncoder) {
+    public UserController(UserService userService, UserRepository userRepository, JwtUtil jwtUtil, BCryptPasswordEncoder bCryptPasswordEncoder, EmailService emailService) {
         this.userService = userService;
         this.userRepository = userRepository;
         this.jwtUtil = jwtUtil;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+        this.emailService = emailService;
     }
 
     // register
@@ -44,10 +49,40 @@ public class UserController {
     public ResponseEntity<Map<String, Object>> createUser(@Valid @RequestBody User user) {
         String token = userService.registerUser(user.getLogin(), user.getPassword(), user.getRole());
 
+        emailService.sendVerificationEmail(user.getLogin(), token);
+
         Map<String, Object> response = new HashMap<>();
         response.put("created", Boolean.TRUE);
-        response.put("token", token);
         return ResponseEntity.ok(response);
+
+    }
+
+    @GetMapping("/auth/confirm")
+    public ResponseEntity<Map<String, Object>> confirmEmail(@RequestParam String token) {
+        System.out.println(token);
+        Map<String, Object> response = new HashMap<>();
+        try {
+            String email = jwtUtil.extractUsername(token);
+
+            Optional<User> userOpt = userRepository.findByLogin(email);
+            if (userOpt.isPresent()) {
+                User user = userOpt.get();
+                user.setEnabled(true);
+                userRepository.save(user);
+
+                response.put("success", true);
+                response.put("message", "User confirmed successfully");
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("success", false);
+                response.put("message", "User not found");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            }
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
     }
 
     // login and authenticate

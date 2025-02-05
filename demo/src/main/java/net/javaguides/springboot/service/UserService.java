@@ -9,6 +9,7 @@ import net.javaguides.springboot.repository.RoleRepository;
 import net.javaguides.springboot.repository.UserRepository;
 import net.javaguides.springboot.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -25,29 +26,34 @@ public class UserService {
     private final BCryptPasswordEncoder passwordEncoder;
     private final RoleRepository roleRepository;
     private final JwtUtil jwtUtil; // Добавьте JwtUtil
+    private final EmailService emailService;
 
     // Конструктор для инъекции зависимостей
     @Autowired
     public UserService(UserRepository userRepository,
                        BCryptPasswordEncoder passwordEncoder,
                        RoleRepository roleRepository,
-                       JwtUtil jwtUtil) {
+                       JwtUtil jwtUtil,
+                       EmailService emailService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.roleRepository = roleRepository;
         this.jwtUtil = jwtUtil;
+        this.emailService = emailService;
     }
 
 
     public String registerUser(String login, String password, Role role) {
 
         if (userRepository.existsByLogin(login)) {
-            throw new RuntimeException("A user with this login already exists!");
+            throw new RuntimeException("A user with this email already exists!");
         }
 
         String hashedPassword = passwordEncoder.encode(password);
 
         User user = new User(login, hashedPassword, role);
+        user.setEnabled(false);
+
         Optional<Role> optionalRole = roleRepository.findById(2L);
 
         if (optionalRole.isPresent()) {
@@ -63,10 +69,14 @@ public class UserService {
 
     public String authenticateUser(String login, String password) {
         User user = userRepository.findByLogin(login)
-               .orElseThrow(() -> new RuntimeException("User not found"));
+               .orElseThrow(() -> new RuntimeException("Неверный логин или пароль!"));
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new RuntimeException("Invalid credentials");
+            throw new RuntimeException("Неверный логин или пароль!");
+        }
+
+        if (!user.isEnabled()) {
+            throw new DisabledException("Аккаунт не подтвержден. Проверьте почту.");
         }
 
         return jwtUtil.generateToken(user.getLogin(), user.getRole().getRole_id());

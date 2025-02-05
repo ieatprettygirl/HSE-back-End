@@ -28,6 +28,9 @@ public class User {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Resume resume;
 
+    @Column(nullable = false)
+    private boolean enabled = false; // from email
+
     public User() {
     }
 
