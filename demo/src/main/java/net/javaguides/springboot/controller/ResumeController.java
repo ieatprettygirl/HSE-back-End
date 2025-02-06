@@ -39,12 +39,12 @@ public class ResumeController {
         String currentUsername = authentication.getName();
         User currentUser = userRepository.findByLogin(currentUsername).orElse(null);
         if (currentUser == null) {
-            return ResponseEntity.status(403).body(Map.of("error", "Unauthorized"));
+            return ResponseEntity.status(403).body(Map.of("error", "Пользователь не авторизован!"));
         }
         resume.setUser(currentUser);
 
         if (resume.getUser().getResume() != null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "User already has a resume!"));
+            return ResponseEntity.badRequest().body(Map.of("error", "У вас уже есть резюме!"));
         }
         resume.setUser(resume.getUser());
         resume.setEducation(resume.getEducation());
@@ -57,7 +57,7 @@ public class ResumeController {
 
         resumeRepository.save(resume);
         Map<String, Object> response = new HashMap<>();
-        response.put("created", Boolean.TRUE);
+        response.put("resume", resume);
         return ResponseEntity.ok(response);
     }
 
@@ -66,39 +66,38 @@ public class ResumeController {
     @GetMapping("/resume/{id}")
     public ResponseEntity<ResumeDTO> getResume(@PathVariable Long id) {
         Resume resume = resumeRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Resume not found!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Резюме не найдено!"));
         ResumeDTO resumeDTO = getResumeDTO(resume);
         return ResponseEntity.ok(resumeDTO);
     }
 
     // update resume
     @PutMapping("/resume/{id}")
-    public ResponseEntity<Map<String, Object>> updateResume(@PathVariable Long id, @Valid @RequestBody Resume resume, Authentication authentication) {
+    public ResponseEntity<Map<String, Object>> updateResume(@PathVariable Long id, @RequestBody Resume resume, Authentication authentication) {
         User currentUser = getUserAuth(authentication);
         if (currentUser == null) {
-            return ResponseEntity.status(403).body(Map.of("error", "Unauthorized"));
+            return ResponseEntity.status(403).body(Map.of("error", "Пользователь не авторизован!"));
         }
         Resume existingResume = resumeRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Resume not found!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Ошибка! Не найдено!"));
 
         if (!existingResume.getUser().getUser_id().equals(currentUser.getResume().getResume_id())) {
-            return ResponseEntity.status(403).body(Map.of("error", "You can only update your own resume!"));
+            return ResponseEntity.status(403).body(Map.of("error", "Ошибка! Вы можете редактировать только своё резюме!"));
         }
 
-        existingResume.setSkills(resume.getSkills());
-        existingResume.setBirthday(resume.getBirthday());
-        existingResume.setContact(resume.getContact());
-        existingResume.setGender(resume.getGender());
-        existingResume.setFull_name(resume.getFull_name());
-        existingResume.setDescription(resume.getDescription());
-        existingResume.setEducation(resume.getEducation());
+        if (resume.getSkills() != null) existingResume.setSkills(resume.getSkills());
+        if (resume.getBirthday() != null) existingResume.setBirthday(resume.getBirthday());
+        if (resume.getContact() != null) existingResume.setContact(resume.getContact());
+        if (resume.getGender() != null) existingResume.setGender(resume.getGender());
+        if (resume.getFull_name() != null) existingResume.setFull_name(resume.getFull_name());
+        if (resume.getDescription() != null) existingResume.setDescription(resume.getDescription());
+        if (resume.getEducation() != null) existingResume.setEducation(resume.getEducation());
 
         resumeRepository.save(existingResume);
 
         ResumeDTO resumeDTO = getResumeDTO(existingResume);
 
         Map<String, Object> response = new HashMap<>();
-        response.put("updated", Boolean.TRUE);
         response.put("resume", resumeDTO);
         return ResponseEntity.ok(response);
     }
@@ -108,13 +107,13 @@ public class ResumeController {
     public ResponseEntity<Map<String, Object>> deleteMyResume(@PathVariable Long id, Authentication authentication) {
         User currentUser = getUserAuth(authentication);
         if (currentUser == null) {
-            return ResponseEntity.status(403).body(Map.of("error", "Unauthorized"));
+            return ResponseEntity.status(403).body(Map.of("error", "Пользователь не авторизован!"));
         }
         Resume resumeToDel = resumeRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Resume not found!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Ошибка! Не найдено!"));
 
         if (!resumeToDel.getUser().getUser_id().equals(currentUser.getResume().getResume_id())) {
-            return ResponseEntity.status(403).body(Map.of("error", "You can only delete your own resume!"));
+            return ResponseEntity.status(403).body(Map.of("error", "Ошибка! Недостаточно прав доступа!"));
         }
 
         // DELETE связь user с resume
@@ -122,11 +121,11 @@ public class ResumeController {
     }
 
     // delete resume by admin
-    @DeleteMapping("/admin/resume/{id}")
+    @DeleteMapping("/resume/del/{id}")
     @PreAuthorize("hasRole('ROLE_1')")
     public ResponseEntity<Map<String, Object>> deleteResumeByAdmin(@PathVariable Long id, Authentication authentication) {
         Resume resumeToDel = resumeRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Resume not found!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Резюме с id:" + id + "не найдено!"));
 
         User user = resumeToDel.getUser();
         return getMapResponseEntity(resumeToDel, user);
@@ -139,9 +138,7 @@ public class ResumeController {
         resumeRepository.delete(resumeToDel);
 
         Map<String, Object> response = new HashMap<>();
-        response.put("deleted", Boolean.TRUE);
-        response.put("resume", resumeToDel);
-        response.put("message", "Resume deleted successfully!");
+        response.put("message", "Резюме успешно удалено!");
         return ResponseEntity.ok(response);
     }
 
