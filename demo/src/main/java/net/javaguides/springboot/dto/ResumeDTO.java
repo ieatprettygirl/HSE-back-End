@@ -2,7 +2,6 @@ package net.javaguides.springboot.dto;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.javaguides.springboot.model.Resume;
 
 import java.util.Date;
 

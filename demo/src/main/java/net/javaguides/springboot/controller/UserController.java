@@ -206,7 +206,6 @@ public class UserController {
         userRepository.delete(user);
 
         Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
         response.put("message", "Пользователь успешно удален!");
         return ResponseEntity.ok(response);
     }
@@ -226,7 +225,6 @@ public class UserController {
         SecurityContextHolder.clearContext();
 
         Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
         response.put("message", "Профиль успешно удалён!");
         return ResponseEntity.ok(response);
     }

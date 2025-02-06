@@ -1,11 +1,13 @@
 package net.javaguides.springboot.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.util.Date;
+import java.util.List;
 
 @Getter
 @Setter
@@ -42,6 +44,10 @@ public class Company {
     private Date date_reg;
 
     private Boolean is_accepted = false;
+
+    @OneToMany(mappedBy = "company", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @JsonIgnoreProperties({"company"})
+    private List<Vacancy> vacancies;
 
     public Company() {
     }
