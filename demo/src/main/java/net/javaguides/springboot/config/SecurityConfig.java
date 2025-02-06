@@ -43,6 +43,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/register").permitAll() // Запросы без токена
                         .requestMatchers("/api/auth/login").permitAll()
                         .requestMatchers("/api/auth/confirm").permitAll()
+                        .requestMatchers("/api/auth/confirm-email-change").permitAll()
                         .anyRequest().authenticated() // Запросы с аутентификацией
                 )
                 .exceptionHandling(httpExceptionHandling ->

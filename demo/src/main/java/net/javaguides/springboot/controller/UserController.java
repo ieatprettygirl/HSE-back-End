@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -54,7 +55,6 @@ public class UserController {
         Map<String, Object> response = new HashMap<>();
         response.put("created", Boolean.TRUE);
         return ResponseEntity.ok(response);
-
     }
 
     @GetMapping("/auth/confirm")
@@ -75,12 +75,12 @@ public class UserController {
                 return ResponseEntity.ok(response);
             } else {
                 response.put("success", false);
-                response.put("message", "User not found");
+                response.put("message", "Пользователя не существует!");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
             }
         } catch (Exception e) {
             response.put("success", false);
-            response.put("message", "Error: " + e.getMessage());
+            response.put("message", "Ошибка: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
@@ -96,7 +96,12 @@ public class UserController {
             Map<String, Object> response = new HashMap<>();
             response.put("authenticated", Boolean.TRUE);
             response.put("token", token);
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(response);}
+        catch (DisabledException e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("authenticated", Boolean.FALSE);
+            errorResponse.put("error", "Аккаунт не подтвержден! Подтвердите через электронную почту.");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
         } catch (RuntimeException e) {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("authenticated", Boolean.FALSE);
@@ -106,22 +111,15 @@ public class UserController {
         }
     }
 
-    // get all users
-    // @PreAuthorize("hasRole('ROLE_1')")
-    // @GetMapping("/users")
-    // public List<User> getAllUsers(){
-    //     return userRepository.findAll();
-    // }
-
     // get information about my user
     @GetMapping("/profile/{id}")
     public ResponseEntity<User> getUserById(@PathVariable Long id) {
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
         User existingUser = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Пользователя не существует!"));
 
         if (!existingUser.getLogin().equals(currentUsername)) {
-            throw new RuntimeException("You can only update your own profile!");
+            throw new RuntimeException("Вы можете обновлять только информацию о своем профиле!");
         }
         return ResponseEntity.ok(existingUser);
     }
@@ -131,17 +129,25 @@ public class UserController {
     public ResponseEntity<Map<String, Object>> updateOwnProfile(@PathVariable Long id, @RequestBody User user) {
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
         User existingUser = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден!"));
 
         if (!existingUser.getLogin().equals(currentUsername)) {
-            throw new RuntimeException("You can only update your own profile!");
+            throw new RuntimeException("Вы можете обновить информацию только о своём пользователе!");
         }
 
         if (user.getLogin() != null && !user.getLogin().equals(existingUser.getLogin())) {
             if (userRepository.existsByLogin(user.getLogin())) {
-                throw new RuntimeException("Login is already taken!");
+                throw new RuntimeException("Почта уже зарегестрирована!");
             }
-            existingUser.setLogin(user.getLogin());
+            String newToken = jwtUtil.generateToken(user.getLogin(), existingUser.getRole().getRole_id());
+            existingUser.setPendingLogin(user.getLogin());
+            emailService.sendConfirmationChangeEmail(existingUser.getPendingLogin(), newToken);
+            userRepository.save(existingUser);
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Информация о профиле обновлена. Если вы изменили адрес электронной почты, подтвердите его, перейдя по ссылке, отправленной на новый адрес электронной почты.");
+            response.put("user", existingUser);
+
+            return ResponseEntity.ok(response);
         }
 
         if (user.getPassword() != null) { existingUser.setPassword(bCryptPasswordEncoder.encode(user.getPassword())); }
@@ -156,6 +162,31 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/auth/confirm-email-change")
+    public ResponseEntity<Map<String, Object>> confirmEmailChange(@RequestParam String token) {
+        String newEmail = jwtUtil.extractUsername(token);
+
+        Optional<User> userOpt = userRepository.findByPendingLogin(newEmail);
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            user.setLogin(newEmail);  // Обновляем основной login
+            user.setPendingLogin(null);  // Очищаем временное поле
+            userRepository.save(user);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Почта успешно изменена!");
+
+            return ResponseEntity.ok(response);
+        } else {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "Ошибка! Невалидный токен.");
+
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+    }
+
     // delete user rest api
     @DeleteMapping("/user/{id}")
     @PreAuthorize("hasRole('ROLE_1')")
@@ -163,12 +194,12 @@ public class UserController {
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
 
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User not exist with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Пользователя не существует!"));
 
         if (user.getLogin().equals(currentUsername)) {
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
-            response.put("message", "You cannot delete yourself!");
+            response.put("message", "Вы не можете удалить свой профиль!");
             return ResponseEntity.status(403).body(response);
         }
 
@@ -176,7 +207,7 @@ public class UserController {
 
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
-        response.put("message", "User deleted successfully!");
+        response.put("message", "Пользователь успешно удален!");
         return ResponseEntity.ok(response);
     }
 
@@ -185,10 +216,10 @@ public class UserController {
     public ResponseEntity<Map<String, Object>> deleteMyProfile(@PathVariable Long id) {
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
         User existingUser = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Пользователя не существует!"));
 
         if (!existingUser.getLogin().equals(currentUsername)) {
-            throw new RuntimeException("You can only delete your own profile!");
+            throw new RuntimeException("Вы можете удалить только свой профиль!");
         }
         userRepository.delete(existingUser);
 
@@ -196,7 +227,7 @@ public class UserController {
 
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
-        response.put("message", "You profile deleted successfully!");
+        response.put("message", "Профиль успешно удалён!");
         return ResponseEntity.ok(response);
     }
 }

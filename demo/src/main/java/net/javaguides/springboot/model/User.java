@@ -17,6 +17,8 @@ public class User {
     @Column(nullable = false, unique = true)
     private String login;
 
+    private String pendingLogin;
+
     @NotNull
     @Column(nullable = false)
     private String password;
